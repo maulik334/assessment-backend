@@ -2,23 +2,17 @@ const app = require("./app");
 const connectDatabase = require("./config/database");
 const cloudinary = require("cloudinary");
 const killPort = require("kill-port");
-const getPort = require("get-port").default;
 
 const parsedPort = parseInt(process.env.PORT, 10);
 const PORT = parsedPort || 4000;
 
-const checkPort = async (port, maxPort = 65535) => {
-  if (port > maxPort) {
-    throw new Error("No available ports found");
-  }
-
+const checkPort = async (port) => {
   try {
     await killPort(port, "tcp");
     await killPort(port, "udp");
-    return port;
   } catch (err) {
-    return checkPort(port + 1, maxPort);
   }
+  return port;
 };
 
 process.on("uncaughtException", (err) => {
@@ -38,6 +32,7 @@ const startServer = async () => {
   }
 
   const safePort = await checkPort(PORT);
+  const { default: getPort } = await import("get-port");
   const final_port = await getPort({ port: safePort });
 
   app.listen(final_port, () => {
